@@ -77,6 +77,12 @@ struct NodeLevel1 {
       return true;
     } else if(state.player.row == n.state.player.row and state.player.col == n.state.player.col and state.player.compass < n.state.player.compass) {
       return true;
+    } else if (state.colaborator.row < n.state.colaborator.row){
+      return true;
+    } else if(state.colaborator.row == n.state.colaborator.row and state.colaborator.col < n.state.colaborator.col){
+      return true;
+    } else if(state.colaborator.row == n.state.colaborator.row and state.colaborator.col == n.state.colaborator.col and state.colaborator.compass < n.state.colaborator.compass) {
+      return true;
     }
     return false;
   }
@@ -110,7 +116,7 @@ class ComportamientoJugador : public Comportamiento {
     Action think(Sensores sensores);
     int interact(Action accion, int valor);
     void VisualizePlan(const StateLevel0 &st, const list<Action> &plan);
-
+    void VisualizePlan(const StateLevel1 &st, const list<Action> &plan);
   private:
     // Declarar Variables de Estado
     list<Action> actionPlan;

@@ -317,9 +317,70 @@ void ComportamientoJugador::VisualizePlan(const StateLevel0 &st, const list<Acti
 	}
 }
 
+void ComportamientoJugador::VisualizePlan(const StateLevel1 &st, const list<Action> &plan) {
+	nullMatrix(mapaConPlan);
+	StateLevel1 auxState = st;
+
+	auto it = plan.begin();
+	while (it != plan.end()) {
+		if ((*it != act_CLB_WALK) and (*it != act_CLB_TURN_SR) and (*it != act_CLB_STOP)) {
+			switch (auxState.colaboratorLastOrder)
+			{
+			case act_CLB_WALK:
+				auxState.colaborator = nextPlace(auxState.colaborator);
+				mapaConPlan[auxState.colaborator.row][auxState.colaborator.col] = 2;
+				break;
+			case act_CLB_TURN_SR:
+				auxState.colaborator.compass = (Orientacion)((auxState.colaborator.compass + 1) % 8);
+				break;
+			}
+		}
+
+		switch (*it)
+		{
+		case actRUN:
+			auxState.player = nextPlace(auxState.player);
+			mapaConPlan[auxState.player.row][auxState.player.col] = 3;
+			auxState.player = nextPlace(auxState.player);
+			mapaConPlan[auxState.player.row][auxState.player.col] = 1;
+			/* code */
+			break;
+		case actWALK:
+			auxState.player = nextPlace(auxState.player);
+			mapaConPlan[auxState.player.row][auxState.player.col] = 1;
+			break;
+		case actTURN_SR:
+			auxState.player.compass = (Orientacion) ((auxState.player.compass + 1) % 8);
+			break;
+		case actTURN_L:
+			auxState.player.compass = static_cast<Orientacion>((auxState.player.compass+6)%8);
+			break;
+		case act_CLB_WALK:
+			auxState.colaborator = nextPlace(auxState.colaborator);
+			auxState.colaboratorLastOrder = act_CLB_WALK;
+			mapaConPlan[auxState.colaborator.row][auxState.colaborator.col] = 2;
+			break;
+		case act_CLB_TURN_SR:
+			auxState.colaborator.compass = (Orientacion)((auxState.colaborator.compass + 1) % 8);
+			auxState.colaboratorLastOrder = act_CLB_TURN_SR;
+			break;
+		case act_CLB_STOP:
+			auxState.colaboratorLastOrder = act_CLB_STOP;
+		default:
+			break;
+		}
+		it++;
+	}
+}
+
 
 bool isSolutionFoundLevel0(const StateLevel0 &state, const Ubication &final) {
 	return state.player.row == final.row and state.player.col == final.col;
+}
+
+bool isSolutionFoundLevel1(const StateLevel1 &state, const Ubication &final) {
+	// return (rand() % 28000 == 1)or(state.colaborator.row == final.row and state.colaborator.col == final.col);
+	return (state.colaborator.row == final.row and state.colaborator.col == final.col);
 }
 
 bool isValidPlace(const Ubication &pos, const vector<vector<unsigned char>> map) {
@@ -454,19 +515,18 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 	{
 	case actWALK:
 		oneStepUbication = nextPlace(state.player);
-		if (isValidPlace(oneStepUbication, map) and !isSameUbication(oneStepUbication, state.colaborator)) {
+		if (isValidPlace(oneStepUbication, map) and !isSameUbication(oneStepUbication, result.colaborator)) {
 			result.player = oneStepUbication;
 		}
 
 		switch (result.colaboratorLastOrder)
 		{
 		case act_CLB_TURN_SR:
-			result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+			result.colaborator.compass = static_cast<Orientacion>((result.colaborator.compass+1)%8);
 			break;
 		case act_CLB_WALK:
 			colaboratorOneStep = nextPlace(state.colaborator);
-			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
-				cout << "000000";
+			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, result.player)) {
 				result.colaborator = colaboratorOneStep;
 			}
 			break;
@@ -474,7 +534,6 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 		default:
 			break;
 		}
-
 		break;
 	
 	case actRUN:
@@ -489,11 +548,11 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 		switch (result.colaboratorLastOrder)
 		{
 		case act_CLB_TURN_SR:
-			result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+			result.colaborator.compass = static_cast<Orientacion>((result.colaborator.compass+1)%8);
 			break;
 		case act_CLB_WALK:
 			colaboratorOneStep = nextPlace(state.colaborator);
-			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
+			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, result.player)) {
 				result.colaborator = colaboratorOneStep;
 			}
 			break;
@@ -508,11 +567,11 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 		switch (result.colaboratorLastOrder)
 		{
 		case act_CLB_TURN_SR:
-			result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+			result.colaborator.compass = static_cast<Orientacion>((result.colaborator.compass+1)%8);
 			break;
 		case act_CLB_WALK:
 			colaboratorOneStep = nextPlace(state.colaborator);
-			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
+			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, result.player)) {
 				result.colaborator = colaboratorOneStep;
 			}
 			break;
@@ -528,11 +587,11 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 		switch (result.colaboratorLastOrder)
 		{
 		case act_CLB_TURN_SR:
-			result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+			result.colaborator.compass = static_cast<Orientacion>((result.colaborator.compass+1)%8);
 			break;
 		case act_CLB_WALK:
 			colaboratorOneStep = nextPlace(state.colaborator);
-			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
+			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, result.player)) {
 				result.colaborator = colaboratorOneStep;
 			}
 			break;
@@ -540,15 +599,14 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 		default:
 			break;
 		}
-		
 		break;
 	case act_CLB_TURN_SR:
-		result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+		result.colaborator.compass = static_cast<Orientacion>((result.colaborator.compass+1)%8);
 		result.colaboratorLastOrder = act_CLB_TURN_SR;
 		break;
 	case act_CLB_WALK:
 		colaboratorOneStep = nextPlace(state.colaborator);
-		if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
+		if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, result.player)) {
 			result.colaborator = colaboratorOneStep;
 			result.colaboratorLastOrder = act_CLB_WALK;
 		}
@@ -558,25 +616,177 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 	default:
 		break;
 	}
+	if (isSameUbication(result.player, result.colaborator)) {
+		result = state;
+	}
 	return result;
 }
 
 list<Action> WidthSearchLevel1(const StateLevel1 &start, const Ubication &final, const vector<vector<unsigned char>> &mapa) {
-	list<Action> actionList;
-	actionList.push_back(act_CLB_WALK);
-	actionList.push_back(actWALK);
-	actionList.push_back(act_CLB_TURN_SR);
-	actionList.push_back(actTURN_L);
-	actionList.push_back(actRUN);
-	actionList.push_back(actTURN_SR);
-	actionList.push_back(actTURN_SR);
-	actionList.push_back(actTURN_SR);
-	actionList.push_back(actTURN_SR);
-	actionList.push_back(actTURN_SR);
-	actionList.push_back(actTURN_SR);
-	actionList.push_back(actTURN_SR);
-	actionList.push_back(actTURN_SR);
-	return actionList;
+	NodeLevel1 currentNode;
+	list<NodeLevel1> frontier;
+	set<NodeLevel1> explored;
+	list<Action> plan;
+	currentNode.state = start;
+
+	frontier.push_back(currentNode);
+	bool solutionFound = (currentNode.state.colaborator.row == final.row and currentNode.state.colaborator.col == final.col);
+	bool hadColaborator = colaboratorInVision(currentNode.state.player, currentNode.state.colaborator);
+
+	while(!frontier.empty() and !solutionFound) {
+		// Delete actual state from frontier and add state to explored
+		frontier.pop_front();
+		explored.insert(currentNode);
+
+		// Child Node with action ACT_WALK
+		NodeLevel1 child_walk = currentNode;
+
+		hadColaborator = colaboratorInVision(child_walk.state.player, child_walk.state.colaborator);
+		child_walk.state = applyLevel1(actWALK, currentNode.state, mapa);
+		child_walk.sequence.push_back(actWALK);
+
+		if (isSolutionFoundLevel1(child_walk.state, final)) {
+			currentNode = child_walk;
+			solutionFound = true;
+		} else {
+			// if (hadColaborator and !colaboratorInVision(child_walk.state.player, child_walk.state.colaborator)) {
+			// 	child_walk = currentNode;
+			// 	child_walk.state = applyLevel1(act_CLB_STOP, child_walk.state, mapa);
+			// 	child_walk.state = applyLevel1(actWALK, currentNode.state, mapa);
+			// 	child_walk.sequence.pop_back();
+			// 	child_walk.sequence.push_back(act_CLB_STOP);
+			// 	child_walk.sequence.push_back(actWALK);
+			// }
+			if (explored.find(child_walk)==explored.end()){
+				frontier.push_back(child_walk);
+			}
+		}
+
+
+		if (!solutionFound) {
+			// Child Node with action ACT_RUN
+			NodeLevel1 child_run = currentNode;
+			hadColaborator = colaboratorInVision(child_run.state.player, child_run.state.colaborator);
+			child_run.state = applyLevel1(actRUN, currentNode.state, mapa);
+			child_run.sequence.push_back(actRUN);
+			if (isSolutionFoundLevel1(child_run.state, final)) {
+				currentNode = child_run;
+				solutionFound = true;
+			} else {
+				// if (hadColaborator and !colaboratorInVision(child_run.state.player, child_run.state.colaborator)) {
+				// 	child_run = currentNode;
+				// 	child_run.state = applyLevel1(act_CLB_STOP, child_run.state, mapa);
+				// 	child_run.state = applyLevel1(actRUN, currentNode.state, mapa);
+				// 	child_run.sequence.pop_back();
+				// 	child_run.sequence.push_back(act_CLB_STOP);
+				// 	child_run.sequence.push_back(actRUN);
+				// }
+				if (explored.find(child_run)==explored.end()){
+					frontier.push_back(child_run);
+				}
+			}
+		}
+
+
+		if (!solutionFound) {
+			// Child Node with action ACT_TURN_L
+			NodeLevel1 child_turnL = currentNode;
+			hadColaborator = colaboratorInVision(child_turnL.state.player, child_turnL.state.colaborator);
+			
+			child_turnL.state = applyLevel1(actTURN_L, currentNode.state, mapa);
+			child_turnL.sequence.push_back(actTURN_L);
+			if (isSolutionFoundLevel1(child_turnL.state, final)) {
+				currentNode = child_turnL;
+				solutionFound = true;
+			} else {
+				// if (hadColaborator and !colaboratorInVision(child_turnL.state.player, child_turnL.state.colaborator)) {
+				// 	child_turnL = currentNode;
+				// 	child_turnL.state = applyLevel1(act_CLB_STOP, child_turnL.state, mapa);
+				// 	child_turnL.state = applyLevel1(actTURN_L, currentNode.state, mapa);
+				// 	child_turnL.sequence.pop_back();
+				// 	child_turnL.sequence.push_back(act_CLB_STOP);
+				// 	child_turnL.sequence.push_back(actTURN_L);
+				// }
+				if (explored.find(child_turnL)==explored.end()){
+					frontier.push_back(child_turnL);
+				}
+			}
+			// Child Node with action ACT_TURN_SR
+			NodeLevel1 child_turnSR = currentNode;
+			hadColaborator = colaboratorInVision(child_turnSR.state.player, child_turnSR.state.colaborator);
+			child_turnSR.state = applyLevel1(actTURN_SR, currentNode.state, mapa);
+			child_turnSR.sequence.push_back(actTURN_SR);
+			if (isSolutionFoundLevel1(child_turnSR.state, final)) {
+				currentNode = child_turnSR;
+				solutionFound = true;
+			}else {
+				// if (hadColaborator and !colaboratorInVision(child_turnSR.state.player, child_turnSR.state.colaborator)) {
+				// 	child_turnSR = currentNode;
+				// 	child_turnSR.state = applyLevel1(act_CLB_STOP, child_turnSR.state, mapa);
+				// 	child_turnSR.state = applyLevel1(actTURN_SR, currentNode.state, mapa);
+				// 	child_turnSR.sequence.pop_back();
+				// 	child_turnSR.sequence.push_back(act_CLB_STOP);
+				// 	child_turnSR.sequence.push_back(actTURN_SR);
+				// }
+				if (explored.find(child_turnSR)==explored.end()){
+					frontier.push_back(child_turnSR);
+				}
+			}
+		}
+
+		// Child Node with action ACT_CLB_WALK
+		if (!solutionFound and colaboratorInVision(currentNode.state.player, currentNode.state.colaborator)){
+			NodeLevel1 child_walk_clb = currentNode;
+			child_walk_clb.state = applyLevel1(act_CLB_WALK, currentNode.state, mapa);
+			child_walk_clb.sequence.push_back(act_CLB_WALK);
+			if (isSolutionFoundLevel1(child_walk_clb.state, final)) {
+				currentNode = child_walk_clb;
+				solutionFound = true;
+			} else if (explored.find(child_walk_clb)==explored.end()){
+				frontier.push_back(child_walk_clb);
+			}
+		}
+
+		if (!solutionFound and colaboratorInVision(currentNode.state.player, currentNode.state.colaborator)){
+			// Child Node with action ACT_CLB_STOP
+			NodeLevel1 child_walk_clb = currentNode;
+			child_walk_clb.state = applyLevel1(act_CLB_STOP, currentNode.state, mapa);
+			child_walk_clb.sequence.push_back(act_CLB_STOP);
+			if (isSolutionFoundLevel1(child_walk_clb.state, final)) {
+				currentNode = child_walk_clb;
+				solutionFound = true;
+			} else if (explored.find(child_walk_clb)==explored.end()){
+				frontier.push_back(child_walk_clb);
+			}
+		}
+		if (!solutionFound and colaboratorInVision(currentNode.state.player, currentNode.state.colaborator)){
+			// Child Node with action ACT_CLB_TURNSR
+			NodeLevel1 child_walk_clb_turn = currentNode;
+			child_walk_clb_turn.state = applyLevel1(act_CLB_TURN_SR, currentNode.state, mapa);
+			child_walk_clb_turn.sequence.push_back(act_CLB_TURN_SR);
+			if (explored.find(child_walk_clb_turn)==explored.end()){
+				frontier.push_back(child_walk_clb_turn);
+			}
+		}
+
+
+
+		if (!solutionFound and !frontier.empty()) {
+			currentNode = frontier.front();
+			while(!frontier.empty() and explored.find(currentNode) != explored.end()) {
+				frontier.pop_front();
+				if (!frontier.empty()) {
+					currentNode = frontier.front();
+				}
+			}
+		}
+	}
+	if (solutionFound) {
+		plan = currentNode.sequence;
+		cout << "PLan found" <<endl;
+		DrawPlan(currentNode.sequence); 
+	}
+	return plan;
 }
 void DrawTerrainSensor(const vector<unsigned char> terrain) {
 	auto it = terrain.begin();
@@ -630,6 +840,7 @@ Action ComportamientoJugador::think(Sensores sensores)
 			goal.row = sensores.destinoF;
 			goal.col = sensores.destinoC;
 			actionPlan = WidthSearchLevel1(levelOneCurrentState, goal, mapaResultado);
+			VisualizePlan(levelOneCurrentState, actionPlan);
 			hasPlan = true;
 			break;
 		}
@@ -644,35 +855,6 @@ Action ComportamientoJugador::think(Sensores sensores)
 	default:
 		break;
 	}
-	Action action = actionPlan.front();
-	StateLevel1 result1 = applyLevel1(action, levelOneCurrentState, mapaResultado);
-	switch (action)
-	{
-	case actWALK:
-		cout << "W" <<endl;
-		break;
-	
-	case actRUN:
-		cout << "R" <<endl;
-
-		break;
-	case actTURN_SR:
-		cout << "SR" <<endl;
-		
-		break;
-	case actTURN_L:
-		cout << "L" <<endl;
-
-		break;
-	case actIDLE:
-		cout << "I" <<endl;
-		break;
-	default:
-		break;
-	}
-	levelOneCurrentState = result1;
-	cout << "Predict " << result1.player.row << " " << result1.player.col <<endl;
-	cout << "Predict C " << result1.colaborator.row << " " << result1.colaborator.col <<endl;
 	return accion;
 }
 
