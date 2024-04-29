@@ -449,7 +449,7 @@ list<Action> WidthSearchLevel0(const StateLevel0 &start, const Ubication &final,
 
 StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const vector<vector<unsigned char>> map) {
 	StateLevel1 result = state;
-	Ubication oneStepUbication, twoStepsUbication;
+	Ubication oneStepUbication, twoStepsUbication, colaboratorOneStep;
 	switch (action)
 	{
 	case actWALK:
@@ -457,6 +457,24 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 		if (isValidPlace(oneStepUbication, map) and !isSameUbication(oneStepUbication, state.colaborator)) {
 			result.player = oneStepUbication;
 		}
+
+		switch (result.colaboratorLastOrder)
+		{
+		case act_CLB_TURN_SR:
+			result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+			break;
+		case act_CLB_WALK:
+			colaboratorOneStep = nextPlace(state.colaborator);
+			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
+				cout << "000000";
+				result.colaborator = colaboratorOneStep;
+			}
+			break;
+		
+		default:
+			break;
+		}
+
 		break;
 	
 	case actRUN:
@@ -467,13 +485,76 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 				result.player = twoStepsUbication;
 			}
 		}
+
+		switch (result.colaboratorLastOrder)
+		{
+		case act_CLB_TURN_SR:
+			result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+			break;
+		case act_CLB_WALK:
+			colaboratorOneStep = nextPlace(state.colaborator);
+			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
+				result.colaborator = colaboratorOneStep;
+			}
+			break;
+		
+		default:
+			break;
+		}
+
 		break;
 	case actTURN_SR:
 		result.player.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+		switch (result.colaboratorLastOrder)
+		{
+		case act_CLB_TURN_SR:
+			result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+			break;
+		case act_CLB_WALK:
+			colaboratorOneStep = nextPlace(state.colaborator);
+			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
+				result.colaborator = colaboratorOneStep;
+			}
+			break;
+		
+		default:
+			break;
+		}
+
 		break;
 	case actTURN_L:
 		result.player.compass = static_cast<Orientacion>((result.player.compass+6)%8);
+		
+		switch (result.colaboratorLastOrder)
+		{
+		case act_CLB_TURN_SR:
+			result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+			break;
+		case act_CLB_WALK:
+			colaboratorOneStep = nextPlace(state.colaborator);
+			if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
+				result.colaborator = colaboratorOneStep;
+			}
+			break;
+		
+		default:
+			break;
+		}
+		
 		break;
+	case act_CLB_TURN_SR:
+		result.colaborator.compass = static_cast<Orientacion>((result.player.compass+1)%8);
+		result.colaboratorLastOrder = act_CLB_TURN_SR;
+		break;
+	case act_CLB_WALK:
+		colaboratorOneStep = nextPlace(state.colaborator);
+		if (isValidPlace(colaboratorOneStep, map) and !isSameUbication(colaboratorOneStep, state.player)) {
+			result.colaborator = colaboratorOneStep;
+			result.colaboratorLastOrder = act_CLB_WALK;
+		}
+		break;
+	case act_CLB_STOP:
+		result.colaboratorLastOrder = act_CLB_STOP;
 	default:
 		break;
 	}
@@ -482,7 +563,9 @@ StateLevel1 applyLevel1(const Action &action, const StateLevel1 &state, const ve
 
 list<Action> WidthSearchLevel1(const StateLevel1 &start, const Ubication &final, const vector<vector<unsigned char>> &mapa) {
 	list<Action> actionList;
+	actionList.push_back(act_CLB_WALK);
 	actionList.push_back(actWALK);
+	actionList.push_back(act_CLB_TURN_SR);
 	actionList.push_back(actTURN_L);
 	actionList.push_back(actRUN);
 	actionList.push_back(actTURN_SR);
@@ -543,6 +626,7 @@ Action ComportamientoJugador::think(Sensores sensores)
 			levelOneCurrentState.colaborator.row = sensores.CLBposF;
 			levelOneCurrentState.colaborator.col = sensores.CLBposC;
 			levelOneCurrentState.colaborator.compass = sensores.CLBsentido;
+			levelOneCurrentState.colaboratorLastOrder = act_CLB_STOP;
 			goal.row = sensores.destinoF;
 			goal.col = sensores.destinoC;
 			actionPlan = WidthSearchLevel1(levelOneCurrentState, goal, mapaResultado);
@@ -586,14 +670,9 @@ Action ComportamientoJugador::think(Sensores sensores)
 	default:
 		break;
 	}
-	if (colaboratorInVision(result1.player, levelOneCurrentState.colaborator)) {
-		cout << "CCCCC" << endl;
-	} else {
-		cout << "NN" << endl;
-
-	}
 	levelOneCurrentState = result1;
 	cout << "Predict " << result1.player.row << " " << result1.player.col <<endl;
+	cout << "Predict C " << result1.colaborator.row << " " << result1.colaborator.col <<endl;
 	return accion;
 }
 
