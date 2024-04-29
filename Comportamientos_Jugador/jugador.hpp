@@ -50,6 +50,45 @@ struct NodeLevel0 {
 };
 
 
+struct StateLevel1 {
+  Ubication player;
+  Ubication colaborator;
+  Action colaboratorLastOrder;
+
+  bool operator==(const StateLevel1 &state) const {
+    return player == state.player and
+        colaborator.row == state.colaborator.row and
+        colaborator.col == state.colaborator.col;
+  }
+};
+
+struct NodeLevel1 {
+  StateLevel1 state;
+  list<Action> sequence;
+
+  bool operator==(const NodeLevel1 &n) const {
+    return (state == n.state);
+  }
+
+  bool operator<(const NodeLevel1 &n) const {
+    if (state.player.row < n.state.player.row){
+      return true;
+    } else if(state.player.row == n.state.player.row and state.player.col < n.state.player.col){
+      return true;
+    } else if(state.player.row == n.state.player.row and state.player.col == n.state.player.col and state.player.compass < n.state.player.compass) {
+      return true;
+    }
+    return false;
+  }
+
+};
+
+struct MatrixCase {
+  int row;
+  int col;
+};
+
+
 
 
 
@@ -64,10 +103,10 @@ class ComportamientoJugador : public Comportamiento {
       goal.col = 0;
       goal.row = 0;
       goal.compass = norte;
+      map = mapaR;
     }
     ComportamientoJugador(const ComportamientoJugador & comport) : Comportamiento(comport){}
     ~ComportamientoJugador(){}
-
     Action think(Sensores sensores);
     int interact(Action accion, int valor);
     void VisualizePlan(const StateLevel0 &st, const list<Action> &plan);
@@ -77,8 +116,9 @@ class ComportamientoJugador : public Comportamiento {
     list<Action> actionPlan;
     bool hasPlan;
     StateLevel0 levelCurrentState;
+    StateLevel1 levelOneCurrentState;
     Ubication goal;
-
+    std::vector< std::vector< unsigned char> > map;
 };
 
 #endif
