@@ -662,6 +662,38 @@ list<Action> WidthSearchLevel1(const StateLevel1 &start, const Ubication &final,
 			}
 		}
 
+				// Child Node with action ACT_CLB_WALK
+		if (!solutionFound and colaboratorInVision(currentNode.state.player, currentNode.state.colaborator)){
+			NodeLevel1 child_walk_clb = currentNode;
+			child_walk_clb.state = applyLevel1(act_CLB_WALK, currentNode.state, mapa);
+			child_walk_clb.sequence.push_back(act_CLB_WALK);
+			if (isSolutionFoundLevel1(child_walk_clb.state, final)) {
+				currentNode = child_walk_clb;
+				solutionFound = true;
+			} else if (explored.find(child_walk_clb)==explored.end()){
+				frontier.push_back(child_walk_clb);
+			}
+		}
+
+		if (!solutionFound and colaboratorInVision(currentNode.state.player, currentNode.state.colaborator)){
+			// Child Node with action ACT_CLB_STOP
+			NodeLevel1 child_walk_clb = currentNode;
+			child_walk_clb.state = applyLevel1(act_CLB_STOP, currentNode.state, mapa);
+			child_walk_clb.sequence.push_back(act_CLB_STOP);
+			if (explored.find(child_walk_clb)==explored.end()){
+				frontier.push_back(child_walk_clb);
+			}
+		}
+		if (!solutionFound and colaboratorInVision(currentNode.state.player, currentNode.state.colaborator)){
+			// Child Node with action ACT_CLB_TURNSR
+			NodeLevel1 child_walk_clb_turn = currentNode;
+			child_walk_clb_turn.state = applyLevel1(act_CLB_TURN_SR, currentNode.state, mapa);
+			child_walk_clb_turn.sequence.push_back(act_CLB_TURN_SR);
+			if (explored.find(child_walk_clb_turn)==explored.end()){
+				frontier.push_back(child_walk_clb_turn);
+			}
+		}
+
 
 		if (!solutionFound) {
 			// Child Node with action ACT_RUN
@@ -733,42 +765,6 @@ list<Action> WidthSearchLevel1(const StateLevel1 &start, const Ubication &final,
 				}
 			}
 		}
-
-		// Child Node with action ACT_CLB_WALK
-		if (!solutionFound and colaboratorInVision(currentNode.state.player, currentNode.state.colaborator)){
-			NodeLevel1 child_walk_clb = currentNode;
-			child_walk_clb.state = applyLevel1(act_CLB_WALK, currentNode.state, mapa);
-			child_walk_clb.sequence.push_back(act_CLB_WALK);
-			if (isSolutionFoundLevel1(child_walk_clb.state, final)) {
-				currentNode = child_walk_clb;
-				solutionFound = true;
-			} else if (explored.find(child_walk_clb)==explored.end()){
-				frontier.push_back(child_walk_clb);
-			}
-		}
-
-		if (!solutionFound and colaboratorInVision(currentNode.state.player, currentNode.state.colaborator)){
-			// Child Node with action ACT_CLB_STOP
-			NodeLevel1 child_walk_clb = currentNode;
-			child_walk_clb.state = applyLevel1(act_CLB_STOP, currentNode.state, mapa);
-			child_walk_clb.sequence.push_back(act_CLB_STOP);
-			if (isSolutionFoundLevel1(child_walk_clb.state, final)) {
-				currentNode = child_walk_clb;
-				solutionFound = true;
-			} else if (explored.find(child_walk_clb)==explored.end()){
-				frontier.push_back(child_walk_clb);
-			}
-		}
-		if (!solutionFound and colaboratorInVision(currentNode.state.player, currentNode.state.colaborator)){
-			// Child Node with action ACT_CLB_TURNSR
-			NodeLevel1 child_walk_clb_turn = currentNode;
-			child_walk_clb_turn.state = applyLevel1(act_CLB_TURN_SR, currentNode.state, mapa);
-			child_walk_clb_turn.sequence.push_back(act_CLB_TURN_SR);
-			if (explored.find(child_walk_clb_turn)==explored.end()){
-				frontier.push_back(child_walk_clb_turn);
-			}
-		}
-
 
 
 		if (!solutionFound and !frontier.empty()) {
